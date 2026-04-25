@@ -3,230 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ludo 3-Player Online</title>
-    
-    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
+    <title>Multiplayer Ludo - 3 Player</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        :root {
+            --p1-color: #ff4757; /* Red */
+            --p2-color: #2ed573; /* Green */
+            --p3-color: #eccc68; /* Yellow */
+            --bg-color: #1e272e;
+            --board-bg: #f1f2f6;
+        }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Press Start 2P', system-ui;
-            background: #0a0a0a;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 10px;
-        }
-        .container { max-width: 1000px; width: 100%; }
-        header { text-align: center; margin-bottom: 15px; }
-        h1 { font-size: 28px; color: #ffcc00; text-shadow: 0 0 10px #ffcc00; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { background-color: var(--bg-color); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; }
 
-        .lobby {
-            background: #1a1a1a;
-            padding: 25px;
-            border: 4px solid #ffcc00;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 420px;
-            text-align: center;
-        }
-        input, button {
-            font-family: 'Press Start 2P', system-ui;
-            padding: 12px 20px;
-            margin: 8px 0;
-            font-size: 14px;
-            border: none;
-            border-radius: 4px;
-        }
-        input { background: #333; color: #fff; width: 85%; }
-        button { background: #ff3366; color: white; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #ff6699; transform: scale(1.05); }
-        .btn-green { background: #33cc66; }
-        .btn-green:hover { background: #44dd77; }
+        /* LOBBY UI */
+        #lobby { display: flex; flex-direction: column; gap: 20px; text-align: center; background: #2f3640; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 400px; }
+        input, button { padding: 15px; font-size: 1.2rem; border-radius: 8px; border: none; outline: none; }
+        button { background: #3742fa; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
+        .error { color: #ff4757; font-size: 0.9rem; }
 
-        .game-container { display: none; flex-direction: column; align-items: center; width: 100%; }
-        .board-container {
-            position: relative;
-            width: 520px;
-            height: 520px;
-            background: #111;
-            border: 8px solid #444;
-            border-radius: 12px;
-            box-shadow: 0 0 30px rgba(255, 204, 0, 0.6);
-        }
-        #board {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: grid;
-            grid-template-columns: repeat(15, 1fr);
-            grid-template-rows: repeat(15, 1fr);
-            gap: 2px;
-            padding: 10px;
-            background: #222;
-        }
-        .cell {
-            background: #333;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: #666;
-        }
-        .home-red { background: #c00 !important; }
-        .home-green { background: #0c0 !important; }
-        .home-yellow { background: #cc0 !important; }
-        .path { background: #555 !important; }
+        /* GAME UI */
+        #game { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 500px; padding: 10px; }
+        
+        .header { display: flex; justify-content: space-between; width: 100%; margin-bottom: 20px; background: #2f3640; padding: 15px; border-radius: 10px; }
+        .players-list { display: flex; gap: 10px; flex-wrap: wrap; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: #333; }
+        .badge.p1 { background: var(--p1-color); }
+        .badge.p2 { background: var(--p2-color); }
+        .badge.p3 { background: var(--p3-color); }
+        
+        /* BOARD */
+        .board-container { position: relative; width: 350px; height: 350px; background: var(--board-bg); border-radius: 15px; border: 8px solid #333; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        
+        /* Homes */
+        .home { position: absolute; width: 100px; height: 100px; border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; padding: 15px; }
+        .home.p1 { bottom: 20px; left: 20px; background: rgba(255, 71, 87, 0.2); border: 2px solid var(--p1-color); }
+        .home.p2 { top: 20px; left: 20px; background: rgba(46, 213, 115, 0.2); border: 2px solid var(--p2-color); }
+        .home.p3 { top: 20px; right: 20px; background: rgba(236, 204, 104, 0.2); border: 2px solid var(--p3-color); }
+        
+        .home-spot { width: 100%; height: 100%; border-radius: 50%; background: rgba(0,0,0,0.1); border: 2px dashed rgba(0,0,0,0.2); }
 
-        .piece {
-            width: 28px; height: 28px;
-            border-radius: 50%;
-            border: 3px solid #fff;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.6);
-            position: absolute;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .p1-piece { background: #ff3366; }
-        .p2-piece { background: #33cc66; }
-        .p3-piece { background: #ffcc33; }
+        /* Track */
+        .track { position: absolute; top: 130px; left: 15px; width: 300px; height: 90px; border: 2px solid #ccc; display: flex; flex-wrap: wrap; }
+        /* Simplification for UI: We abstract the track as a circle visually, but programmatically map pieces */
+        #track-svg { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
 
-        .dice-area { margin: 20px 0; text-align: center; }
-        #dice {
-            width: 80px; height: 80px;
-            background: #fff; color: #000;
-            font-size: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 8px solid #444;
-            border-radius: 12px;
-            margin: 0 auto 10px;
-            box-shadow: 0 8px 0 #222;
-            cursor: pointer;
-            user-select: none;
-        }
-        .turn-info {
-            font-size: 18px;
-            margin: 10px 0;
-            padding: 12px 20px;
-            background: #1a1a1a;
-            border: 4px solid #ffcc00;
-            border-radius: 8px;
-        }
-        .players { display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap; justify-content: center; }
-        .player-slot {
-            padding: 10px 18px;
-            background: #222;
-            border: 3px solid #555;
-            border-radius: 8px;
-            text-align: center;
-            min-width: 110px;
-        }
-        .player-slot.active { border-color: #ffcc00; box-shadow: 0 0 15px #ffcc00; }
-
-        .log {
-            width: 100%; max-width: 520px;
-            height: 110px;
-            background: #111;
-            border: 3px solid #444;
-            padding: 10px;
-            overflow-y: auto;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        .status {
-            position: absolute;
-            top: 10px; left: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 5px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        .win-screen {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            z-index: 100;
-        }
-        .connection-status {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            background: #222;
-        }
+        /* Pieces */
+        .piece { position: absolute; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.3s ease; z-index: 10; transform: translate(-50%, -50%); }
+        .piece.p1 { background: var(--p1-color); }
+        .piece.p2 { background: var(--p2-color); }
+        .piece.p3 { background: var(--p3-color); }
+        
+        /* Controls */
+        .controls { display: flex; flex-direction: column; align-items: center; margin-top: 20px; width: 100%; gap: 15px; background: #2f3640; padding: 20px; border-radius: 10px; }
+        #diceBtn { font-size: 1.5rem; padding: 15px 30px; border-radius: 50px; }
+        #diceBtn:disabled { background: #747d8c; cursor: not-allowed; }
+        .dice-display { font-size: 3rem; font-weight: bold; color: white; background: #333; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; border-radius: 10px; border: 2px solid #555; }
+        
+        .status-text { font-size: 1.1rem; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="connection-status" id="connectionStatus">Connecting...</div>
 
-    <div class="container">
-        <header>
-            <h1>🔥 LUDO 3P</h1>
-            <p style="color:#888; font-size:12px;">Real-time Multiplayer</p>
-        </header>
+    <div id="lobby">
+        <h2>🔥 3-Player Ludo 🔥</h2>
+        <div class="error" id="lobbyError"></div>
+        <button id="createRoomBtn">Create New Room</button>
+        <p>OR</p>
+        <input type="text" id="roomInput" placeholder="Enter Room ID" autocomplete="off" maxlength="6">
+        <button id="joinRoomBtn">Join Room</button>
+    </div>
 
-        <!-- Lobby -->
-        <div id="lobby" class="lobby">
-            <h2 style="margin-bottom:15px; color:#ffcc00;">LUDO 3 PLAYER</h2>
-            <button onclick="createRoom()" class="btn-green" style="width:90%; padding:15px;">CREATE NEW ROOM</button>
-            <div style="margin:20px 0; color:#666;">──────────── OR ────────────</div>
-            <input type="text" id="roomInput" placeholder="ENTER ROOM ID" maxlength="6" style="text-transform:uppercase;">
-            <button onclick="joinRoom()" style="width:90%;">JOIN ROOM</button>
-            <div id="lobbyStatus" style="margin-top:15px; color:#ff3366; font-size:13px; min-height:24px;"></div>
+    <div id="game">
+        <div class="header">
+            <div>Room: <strong id="roomDisplay">---</strong></div>
+            <div class="players-list" id="playersList"></div>
         </div>
 
-        <!-- Game Screen -->
-        <div id="gameScreen" class="game-container">
-            <div style="display:flex; width:100%; max-width:520px; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div id="roomIdDisplay" style="background:#222; padding:8px 16px; border-radius:6px; font-size:14px; color:#ffcc00;"></div>
-                <button onclick="copyRoomLink()" style="background:#555; font-size:12px; padding:8px 14px;">📋 Copy Link</button>
-                <button onclick="leaveRoom()" style="background:#555; font-size:12px; padding:8px 14px;">LEAVE</button>
+        <div class="board-container" id="board">
+            <svg id="track-svg"></svg>
+            
+            <div class="home p1" id="home-p1"></div>
+            <div class="home p2" id="home-p2"></div>
+            <div class="home p3" id="home-p3"></div>
             </div>
 
-            <div class="board-container">
-                <div id="board"></div>
-                <div class="status" id="gameStatus">Waiting for players...</div>
-            </div>
-
-            <div class="dice-area">
-                <div id="dice" onclick="rollDice()">?</div>
-                <div id="diceInfo" style="font-size:14px; color:#aaa;">Roll when it's your turn</div>
-            </div>
-
-            <div class="turn-info" id="turnInfo">Waiting for game to start...</div>
-            <div class="players" id="playersList"></div>
-            <div class="log" id="log"></div>
+        <div class="controls">
+            <div class="status-text" id="turnDisplay">Waiting for players...</div>
+            <div class="dice-display" id="diceValue">-</div>
+            <button id="diceBtn" disabled>Roll Dice</button>
+            <div class="status-text" id="actionPrompt"></div>
         </div>
     </div>
 
-    <!-- Win Screen -->
-    <div id="winScreen" class="win-screen">
-        <div id="winnerText" style="font-size:42px; margin-bottom:20px; text-shadow: 0 0 20px #ff0;"></div>
-        <button onclick="restartGame()" style="padding:15px 40px; font-size:18px; background:#33cc66;">PLAY AGAIN</button>
-    </div>
+    <script type="module">
+        // Using standard Firebase v10 CDN compatible with your config
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, onValue, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    <script>
-        // =============== FIREBASE CONFIG ===============
         const firebaseConfig = {
             apiKey: "AIzaSyD0PAbbgdoW0AncKtvnCHHsr3J0-Meu5HM",
             authDomain: "ludoooooo-df615.firebaseapp.com",
@@ -237,312 +114,306 @@
             appId: "1:502183247328:web:d2db4c226fedc34ac2ff85"
         };
 
-        let app, auth, db;
-        let currentUser = null;
-        let currentRoomId = null;
-        let myPlayerId = null;
-        let gameRef = null;
-        let playersRef = null;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
 
-        const COLORS = {
-            p1: { name: "Red", hex: "#ff3366" },
-            p2: { name: "Green", hex: "#33cc66" },
-            p3: { name: "Yellow", hex: "#ffcc33" }
-        };
+        // State Variables
+        let userUid = null;
+        let currentRoom = null;
+        let myRole = null; // p1, p2, or p3
+        let localState = null;
+        let hasRolledThisTurn = false;
 
-        function addLog(message, type = "info") {
-            const log = document.getElementById('log');
-            if (!log) return;
-            const div = document.createElement('div');
-            div.style.color = type === 'error' ? '#ff3366' : type === 'success' ? '#33cc66' : '#aaa';
-            div.textContent = `> ${message}`;
-            log.appendChild(div);
-            log.scrollTop = log.scrollHeight;
+        // Path logic (Simplified Circular Track layout around the center)
+        const pathCoords = [];
+        const centerX = 175, centerY = 175, radius = 110;
+        for (let i = 0; i < 52; i++) {
+            const angle = (i / 52) * Math.PI * 2 - Math.PI / 2;
+            pathCoords[i + 1] = { 
+                x: centerX + radius * Math.cos(angle), 
+                y: centerY + radius * Math.sin(angle) 
+            };
         }
 
-        function updateConnectionStatus(text, color = "#888") {
-            const el = document.getElementById('connectionStatus');
-            el.textContent = text;
-            el.style.color = color;
+        // Draw track visually
+        const svg = document.getElementById('track-svg');
+        for(let i = 1; i <= 52; i++) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', pathCoords[i].x);
+            circle.setAttribute('cy', pathCoords[i].y);
+            circle.setAttribute('r', '8');
+            circle.setAttribute('fill', i === 1 ? 'var(--p1-color)' : (i === 18 ? 'var(--p2-color)' : (i === 35 ? 'var(--p3-color)' : 'white')));
+            circle.setAttribute('stroke', '#ccc');
+            svg.appendChild(circle);
         }
 
-        async function initFirebase() {
-            try {
-                if (typeof firebase === "undefined") {
-                    setTimeout(initFirebase, 1000);
-                    return;
-                }
-                app = firebase.initializeApp(firebaseConfig);
-                auth = firebase.auth();
-                db = firebase.database();
-
-                const user = await auth.signInAnonymously();
-                currentUser = user.user;
-                updateConnectionStatus("Connected ✅", "#33cc66");
-                addLog("Firebase connected successfully", "success");
-            } catch (e) {
-                console.error(e);
-                updateConnectionStatus("Connection Failed", "#ff3366");
-                addLog("Firebase connection failed: " + e.message, "error");
+        // Init App
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userUid = user.uid;
+                document.getElementById('createRoomBtn').disabled = false;
+                document.getElementById('joinRoomBtn').disabled = false;
+            } else {
+                signInAnonymously(auth).catch(e => showError(e.message));
             }
+        });
+
+        // DOM Elements
+        const lobbyEl = document.getElementById('lobby');
+        const gameEl = document.getElementById('game');
+        const errorEl = document.getElementById('lobbyError');
+        const roomInput = document.getElementById('roomInput');
+        const diceBtn = document.getElementById('diceBtn');
+
+        // Event Listeners
+        document.getElementById('createRoomBtn').onclick = createRoom;
+        document.getElementById('joinRoomBtn').onclick = () => joinRoom(roomInput.value.toUpperCase());
+        diceBtn.onclick = rollDice;
+
+        function showError(msg) {
+            errorEl.innerText = msg;
+            setTimeout(() => errorEl.innerText = '', 3000);
         }
 
-        function createBoard() {
-            const board = document.getElementById('board');
-            board.innerHTML = '';
-            for (let r = 0; r < 15; r++) {
-                for (let c = 0; c < 15; c++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.row = r;
-                    cell.dataset.col = c;
-
-                    if (r < 6 && c < 6) cell.classList.add('home-red');
-                    else if (r < 6 && c > 8) cell.classList.add('home-green');
-                    else if (r > 8 && c > 8) cell.classList.add('home-yellow');
-                    else if ((r >= 6 && r <= 8) || (c >= 6 && c <= 8)) cell.classList.add('path');
-
-                    if (r === 7 && c === 7) {
-                        cell.style.background = '#ffcc00';
-                        cell.textContent = '★';
-                    }
-                    board.appendChild(cell);
-                }
-            }
-        }
-
-        function getVisualPosition(player, index, pos) {
-            if (pos === 0) {
-                const homes = {
-                    p1: [[1,1],[1,3],[3,1],[3,3]],
-                    p2: [[1,11],[1,13],[3,11],[3,13]],
-                    p3: [[11,11],[11,13],[13,11],[13,13]]
-                };
-                const o = homes[player][index];
-                return {row: o[0], col: o[1]};
-            }
-            let p = (pos - 1) % 52;
-            let row = 7, col = 7;
-            if (p < 13) { row = 2; col = 7 + p; }
-            else if (p < 26) { row = 7 + (p-13); col = 13; }
-            else if (p < 39) { row = 13; col = 13 - (p-26); }
-            else { row = 13 - (p-39); col = 2; }
-            return {row: Math.min(14,row), col: Math.min(14,col)};
-        }
-
-        function renderPieces(pieces) {
-            document.querySelectorAll('.piece').forEach(el => el.remove());
-            Object.keys(pieces).forEach(player => {
-                pieces[player].forEach((pos, i) => {
-                    if (pos <= 0 || pos > 57) return;
-                    const v = getVisualPosition(player, i, pos);
-                    const cell = document.querySelector(`.cell[data-row="${v.row}"][data-col="${v.col}"]`);
-                    if (!cell) return;
-                    const piece = document.createElement('div');
-                    piece.className = `piece ${player}-piece`;
-                    piece.style.left = piece.style.top = '50%';
-                    piece.style.transform = 'translate(-50%, -50%)';
-                    piece.textContent = i + 1;
-                    if (player === myPlayerId) piece.onclick = () => attemptMove(player, i, pos);
-                    cell.appendChild(piece);
-                });
-            });
-        }
-
-        // ================== ROOM FUNCTIONS ==================
         function generateRoomId() {
-            return Math.random().toString(36).substring(2,8).toUpperCase();
+            return Math.random().toString(36).substring(2, 7).toUpperCase();
         }
 
         async function createRoom() {
-            if (!currentUser) return addLog("Still connecting to Firebase...", "error");
-            
             const roomId = generateRoomId();
-            currentRoomId = roomId;
-            const roomRef = db.ref(`rooms/${roomId}`);
-
-            await roomRef.set({
-                createdAt: Date.now(),
-                status: "waiting",
-                players: {},
+            const roomRef = ref(db, `rooms/${roomId}`);
+            
+            const initialData = {
+                players: { [userUid]: "p1" },
                 gameState: {
                     status: "waiting",
                     turn: "p1",
-                    dice: {value: 0, lastRolledBy: ""},
-                    pieces: {p1:[0,0,0,0], p2:[0,0,0,0], p3:[0,0,0,0]},
-                    version: 0
+                    dice: { value: 0, lastRolledBy: "" },
+                    pieces: {
+                        p1: [0, 0, 0, 0],
+                        p2: [0, 0, 0, 0],
+                        p3: [0, 0, 0, 0]
+                    },
+                    version: 1
                 }
-            });
+            };
 
-            enterGameScreen(roomId);
-            joinRoomInternal(roomId);
+            await set(roomRef, initialData);
+            myRole = "p1";
+            enterGame(roomId);
         }
 
-        function joinRoom() {
-            let id = document.getElementById('roomInput').value.trim().toUpperCase();
-            if (id.length !== 6) return document.getElementById('lobbyStatus').textContent = "Room ID must be 6 characters";
-            currentRoomId = id;
-            enterGameScreen(id);
-            joinRoomInternal(id);
-        }
+        async function joinRoom(roomId) {
+            if (!roomId) return showError("Enter a Room ID");
+            const roomRef = ref(db, `rooms/${roomId}`);
+            const snapshot = await get(roomRef);
 
-        function enterGameScreen(roomId) {
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'flex';
-            document.getElementById('roomIdDisplay').textContent = `ROOM: ${roomId}`;
-        }
-
-        async function joinRoomInternal(roomId) {
-            gameRef = db.ref(`rooms/${roomId}/gameState`);
-            playersRef = db.ref(`rooms/${roomId}/players`);
-
-            playersRef.on('value', snap => {
-                const players = snap.val() || {};
-                renderPlayers(players);
-                if (!myPlayerId) assignSlot(players);
-            });
-
-            gameRef.on('value', snap => {
-                const state = snap.val();
-                if (state) handleGameUpdate(state);
-            });
-        }
-
-        async function assignSlot(players) {
-            const count = Object.keys(players).length;
-            if (count >= 3) return addLog("Room is full!", "error");
-            myPlayerId = `p${count + 1}`;
-
-            await playersRef.child(currentUser.uid).set({
-                uid: currentUser.uid,
-                slot: myPlayerId,
-                name: COLORS[myPlayerId].name,
-                joinedAt: Date.now()
-            });
-            addLog(`You joined as ${COLORS[myPlayerId].name}`, "success");
-        }
-
-        function renderPlayers(players) {
-            const container = document.getElementById('playersList');
-            container.innerHTML = '';
-            Object.values(players).forEach(p => {
-                const div = document.createElement('div');
-                div.className = `player-slot ${p.slot === myPlayerId ? 'active' : ''}`;
-                div.innerHTML = `
-                    <div style="background:${COLORS[p.slot].hex}; width:22px; height:22px; border-radius:50%; margin:0 auto 8px;"></div>
-                    <div>${COLORS[p.slot].name}</div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function handleGameUpdate(state) {
-            document.getElementById('gameStatus').textContent = state.status.toUpperCase();
+            if (!snapshot.exists()) return showError("Room not found!");
             
-            const turnEl = document.getElementById('turnInfo');
-            const isMyTurn = state.turn === myPlayerId;
-            turnEl.textContent = state.status === "playing" 
-                ? (isMyTurn ? "YOUR TURN!" : `${COLORS[state.turn]?.name || ''}'s Turn`)
-                : "Game Starting...";
-            turnEl.style.color = isMyTurn ? "#33cc66" : "#aaa";
-
-            document.getElementById('dice').textContent = state.dice.value || "?";
-            renderPieces(state.pieces);
-
-            const canRoll = state.status === "playing" && state.turn === myPlayerId && state.dice.value === 0;
-            const diceEl = document.getElementById('dice');
-            diceEl.style.pointerEvents = canRoll ? "all" : "none";
-            diceEl.style.opacity = canRoll ? "1" : "0.6";
-
-            if (state.status === "finished" && state.winner) {
-                showWinner(state.winner);
+            const data = snapshot.val();
+            const players = data.players || {};
+            
+            if (players[userUid]) {
+                myRole = players[userUid]; // Reconnecting
+            } else {
+                const playerCount = Object.keys(players).length;
+                if (playerCount >= 3) return showError("Room is full!");
+                
+                myRole = !Object.values(players).includes("p2") ? "p2" : "p3";
+                await update(ref(db, `rooms/${roomId}/players`), { [userUid]: myRole });
+                
+                if (playerCount === 2) { // Making it 3 players total now
+                    await update(ref(db, `rooms/${roomId}/gameState`), { status: "playing" });
+                }
             }
+            enterGame(roomId);
+        }
+
+        function enterGame(roomId) {
+            currentRoom = roomId;
+            lobbyEl.style.display = 'none';
+            gameEl.style.display = 'flex';
+            document.getElementById('roomDisplay').innerText = roomId;
+            
+            // Listen to Firebase DB
+            onValue(ref(db, `rooms/${roomId}/gameState`), (snapshot) => {
+                const state = snapshot.val();
+                if (state) updateLocalGame(state);
+            });
+            
+            onValue(ref(db, `rooms/${roomId}/players`), (snapshot) => {
+                const players = snapshot.val();
+                if (players) updatePlayerList(players);
+            });
+        }
+
+        function updatePlayerList(players) {
+            const list = document.getElementById('playersList');
+            list.innerHTML = '';
+            for (let uid in players) {
+                const role = players[uid];
+                const span = document.createElement('span');
+                span.className = `badge ${role}`;
+                span.innerText = `${role.toUpperCase()} ${uid === userUid ? '(You)' : ''}`;
+                list.appendChild(span);
+            }
+        }
+
+        function updateLocalGame(state) {
+            localState = state;
+            
+            // UI Updates
+            document.getElementById('diceValue').innerText = state.dice.value > 0 ? state.dice.value : '-';
+            
+            const isMyTurn = (state.turn === myRole);
+            const isPlaying = (state.status === "playing");
+            
+            if (!isPlaying) {
+                document.getElementById('turnDisplay').innerText = "Waiting for 3 players...";
+                diceBtn.disabled = true;
+            } else {
+                document.getElementById('turnDisplay').innerText = isMyTurn ? "Your Turn!" : `${state.turn.toUpperCase()}'s Turn`;
+                
+                // Strict Turn Control UI
+                if (isMyTurn) {
+                    if (state.dice.lastRolledBy === myRole) {
+                        diceBtn.disabled = true;
+                        hasRolledThisTurn = true;
+                        document.getElementById('actionPrompt').innerText = "Move a piece!";
+                    } else {
+                        diceBtn.disabled = false;
+                        hasRolledThisTurn = false;
+                        document.getElementById('actionPrompt').innerText = "Roll the dice!";
+                    }
+                } else {
+                    diceBtn.disabled = true;
+                    document.getElementById('actionPrompt').innerText = "";
+                }
+            }
+
+            renderPieces(state.pieces);
         }
 
         async function rollDice() {
-            if (!gameRef || !myPlayerId) return;
-            try {
-                const state = (await gameRef.once('value')).val();
-                if (state.turn !== myPlayerId || state.dice.value !== 0) return addLog("Not your turn", "error");
-
-                const value = Math.floor(Math.random() * 6) + 1;
-                await gameRef.child('dice').update({value, lastRolledBy: myPlayerId});
-                await gameRef.child('version').set((state.version || 0) + 1);
-                addLog(`Rolled ${value} 🎲`, "success");
-            } catch(e) { addLog("Failed to roll", "error"); }
-        }
-
-        async function attemptMove(player, index, currentPos) {
-            if (player !== myPlayerId || !gameRef) return;
-            try {
-                let state = (await gameRef.once('value')).val();
-                if (state.turn !== myPlayerId || state.dice.value === 0) return;
-
-                let newPos = Math.min(57, currentPos + state.dice.value);
-                state.pieces[player][index] = newPos;
-
-                if (state.pieces[player].every(p => p >= 57)) {
-                    state.status = "finished";
-                    state.winner = player;
-                } else {
-                    state.turn = state.turn === "p1" ? "p2" : state.turn === "p2" ? "p3" : "p1";
+            if (!localState || localState.turn !== myRole || hasRolledThisTurn) return;
+            
+            const roll = Math.floor(Math.random() * 6) + 1;
+            
+            // Use Firebase Transaction to prevent race conditions
+            const stateRef = ref(db, `rooms/${currentRoom}/gameState`);
+            await runTransaction(stateRef, (state) => {
+                if (state && state.turn === myRole && state.dice.lastRolledBy !== myRole) {
+                    state.dice.value = roll;
+                    state.dice.lastRolledBy = myRole;
+                    state.version++;
                 }
-                state.dice.value = 0;
-                state.version = (state.version || 0) + 1;
-
-                await gameRef.set(state);
-            } catch(e) {
-                addLog("Move rejected", "error");
-            }
-        }
-
-        function showWinner(winner) {
-            document.getElementById('winnerText').innerHTML = `${COLORS[winner].name} WINS!<br>🎉`;
-            document.getElementById('winnerText').style.color = COLORS[winner].hex;
-            document.getElementById('winScreen').style.display = 'flex';
-        }
-
-        function copyRoomLink() {
-            if (!currentRoomId) return;
-            const url = `${window.location.origin}${window.location.pathname}?room=${currentRoomId}`;
-            navigator.clipboard.writeText(url).then(() => {
-                addLog("Room link copied to clipboard!", "success");
+                return state;
             });
         }
 
-        function restartGame() {
-            window.location.reload();
-        }
+        function renderPieces(piecesObj) {
+            // Remove old pieces
+            document.querySelectorAll('.piece').forEach(p => p.remove());
+            
+            // Config Start/Home offsets
+            const offsets = { p1: 1, p2: 18, p3: 35 };
 
-        function leaveRoom() {
-            if (currentRoomId && playersRef && currentUser) {
-                playersRef.child(currentUser.uid).remove();
+            for (const player in piecesObj) {
+                piecesObj[player].forEach((pos, index) => {
+                    const el = document.createElement('div');
+                    el.className = `piece ${player}`;
+                    
+                    if (pos === 0) {
+                        // In Base
+                        const homeSpots = document.querySelectorAll(`.home.${player} .home-spot`);
+                        if(homeSpots.length === 0) {
+                            // generate home spots if missing
+                            const homeBox = document.getElementById(`home-${player}`);
+                            for(let i=0; i<4; i++) {
+                                let spot = document.createElement('div');
+                                spot.className = 'home-spot';
+                                homeBox.appendChild(spot);
+                            }
+                        }
+                        const homeSpotsUpdated = document.querySelectorAll(`.home.${player} .home-spot`);
+                        const rect = homeSpotsUpdated[index].getBoundingClientRect();
+                        const boardRect = document.getElementById('board').getBoundingClientRect();
+                        el.style.left = `${rect.left - boardRect.left + rect.width/2}px`;
+                        el.style.top = `${rect.top - boardRect.top + rect.height/2}px`;
+                    } else {
+                        // On Track - calculate absolute position relative to start
+                        let absolutePos = (pos + offsets[player] - 1);
+                        if (absolutePos > 52) absolutePos -= 52;
+                        
+                        const coords = pathCoords[absolutePos];
+                        el.style.left = `${coords.x}px`;
+                        el.style.top = `${coords.y}px`;
+                    }
+
+                    // Click to move
+                    if (player === myRole) {
+                        el.onclick = () => attemptMove(index, pos);
+                    }
+                    
+                    document.getElementById('board').appendChild(el);
+                });
             }
-            window.location.reload();
         }
 
-        // Auto join from URL (great for sharing)
-        function checkUrlForRoom() {
-            const params = new URLSearchParams(window.location.search);
-            const room = params.get('room');
-            if (room && room.length === 6) {
-                setTimeout(() => {
-                    currentRoomId = room;
-                    enterGameScreen(room);
-                    joinRoomInternal(room);
-                }, 1500);
+        async function attemptMove(pieceIndex, currentPos) {
+            if (!localState || localState.turn !== myRole || localState.dice.lastRolledBy !== myRole) return;
+            
+            const diceVal = localState.dice.value;
+            let newPos = currentPos;
+
+            if (currentPos === 0) {
+                if (diceVal === 6) newPos = 1; // Need 6 to exit home
+                else return; // Ignore click if not 6 and in home
+            } else {
+                newPos = currentPos + diceVal;
+                if (newPos > 52) return; // Simplified: block overshooting finish
             }
-        }
 
-        // =============== START ===============
-        window.onload = () => {
-            createBoard();
-            updateConnectionStatus("Connecting to Firebase...");
-            setTimeout(() => {
-                initFirebase();
-                checkUrlForRoom();
-            }, 800);
-        };
+            // Anti-cheat via Transaction
+            const stateRef = ref(db, `rooms/${currentRoom}/gameState`);
+            await runTransaction(stateRef, (state) => {
+                // Version and turn check
+                if (state && state.turn === myRole && state.dice.lastRolledBy === myRole && state.version === localState.version) {
+                    
+                    state.pieces[myRole][pieceIndex] = newPos;
+                    
+                    // Basic capture logic (send others home if same spot)
+                    // Convert relative pos to absolute to check collisions
+                    const offsets = { p1: 1, p2: 18, p3: 35 };
+                    let myAbsolute = (newPos + offsets[myRole] - 1);
+                    if(myAbsolute > 52) myAbsolute -= 52;
+
+                    for(let other in state.pieces) {
+                        if(other !== myRole) {
+                            for(let i=0; i<4; i++) {
+                                let otherPos = state.pieces[other][i];
+                                if(otherPos > 0) {
+                                    let otherAbsolute = (otherPos + offsets[other] - 1);
+                                    if(otherAbsolute > 52) otherAbsolute -= 52;
+                                    
+                                    if(myAbsolute === otherAbsolute) {
+                                        // Captured! Send home
+                                        state.pieces[other][i] = 0;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Next Turn Calculation
+                    state.turn = (myRole === "p1") ? "p2" : ((myRole === "p2") ? "p3" : "p1");
+                    state.dice.lastRolledBy = ""; // Reset roll tracker
+                    state.version++;
+                }
+                return state;
+            });
+        }
     </script>
 </body>
 </html>
