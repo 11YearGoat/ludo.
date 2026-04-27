@@ -2,423 +2,418 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LUDO ULTIMATE MULTIPLAYER</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Ludo - 3 Player</title>
     <style>
         :root {
-            --red: #ff4757; --green: #2ed573; --yellow: #ffa502; --blue: #1e90ff;
-            --bg: #0f172a; --panel: #1e293b; --text: #f8fafc;
-            --cell-size: clamp(22px, 6.2vw, 40px);
+            --p1-color: #ff4757; /* Red */
+            --p2-color: #2ed573; /* Green */
+            --p3-color: #eccc68; /* Yellow */
+            --bg-color: #1e272e;
+            --board-bg: #f1f2f6;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
-
-        /* LOBBY & SCREENS */
-        .screen { width: 100%; max-width: 500px; padding: 20px; display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
-        #lobby-screen { display: flex; }
-        .card { background: var(--panel); padding: 30px; border-radius: 24px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
-        h1 { font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(to right, var(--red), var(--yellow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        input { width: 100%; padding: 16px; margin: 15px 0; border-radius: 12px; border: 2px solid #334155; background: #0f172a; color: white; font-size: 1.1rem; text-align: center; outline: none; }
-        input:focus { border-color: var(--blue); }
-        button { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-primary { background: var(--blue); color: white; box-shadow: 0 4px 15px rgba(30, 144, 255, 0.4); }
-        .btn-success { background: var(--green); color: white; margin-top: 10px; }
-        button:active { transform: scale(0.96); }
-        button:disabled { background: #475569; opacity: 0.6; cursor: not-allowed; }
-
-        /* GAME LAYOUT */
-        #game-screen { padding: 10px; }
-        .top-nav { width: 100%; max-width: calc(15 * var(--cell-size)); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 10px; background: var(--panel); border-radius: 15px; }
         
-        /* THE BOARD */
-        #ludo-board {
-            display: grid;
-            grid-template-columns: repeat(15, var(--cell-size));
-            grid-template-rows: repeat(15, var(--cell-size));
-            background: #fff;
-            border: 6px solid #334155;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            position: relative;
-            border-radius: 4px;
-        }
-
-        .cell { border: 0.1px solid #e2e8f0; position: relative; display: flex; align-items: center; justify-content: center; z-index: 1; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        /* Color Zones */
-        .h-red { background: var(--red); } .h-green { background: var(--green); } .h-yellow { background: var(--yellow); } .h-blue { background: #cbd5e1; }
-        .p-red { background: #fee2e2; } .p-green { background: #dcfce7; } .p-yellow { background: #fef3c7; }
-        
-        .start-red { background: var(--red) !important; }
-        .start-green { background: var(--green) !important; }
-        .start-yellow { background: var(--yellow) !important; }
+        body { background-color: var(--bg-color); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; }
 
-        .safe { background: #e2e8f0; }
-        .safe::after { content: '★'; color: #94a3b8; font-size: 0.8rem; }
-        
-        .home-base { grid-column: span 6; grid-row: span 6; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; padding: 15%; gap: 10%; border: 1px solid rgba(0,0,0,0.1); }
-        .slot { background: white; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
-        
-        .finish-center { 
-            grid-area: 7/7/10/10; 
-            background: conic-gradient(var(--red) 0 90deg, var(--green) 90deg 180deg, var(--yellow) 180deg 270deg, var(--blue) 270deg 360deg);
-            z-index: 2; border: 2px solid #334155;
-        }
+        /* LOBBY UI */
+        #lobby { display: flex; flex-direction: column; gap: 20px; text-align: center; background: #2f3640; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 400px; }
+        input, button { padding: 15px; font-size: 1.2rem; border-radius: 8px; border: none; outline: none; }
+        button { background: #3742fa; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
+        .error { color: #ff4757; font-size: 0.9rem; }
 
-        /* PIECES */
-        .piece {
-            width: 75%; height: 75%; border-radius: 50%; border: 3px solid rgba(255,255,255,0.9);
-            position: absolute; z-index: 50; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .p-red-fill { background: var(--red); }
-        .p-green-fill { background: var(--green); }
-        .p-yellow-fill { background: var(--yellow); }
+        /* GAME UI */
+        #game { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 500px; padding: 10px; }
         
-        .turn-highlight { animation: pulse-piece 1s infinite alternate; z-index: 60; box-shadow: 0 0 15px #fff; }
-        @keyframes pulse-piece { from { transform: scale(1); } to { transform: scale(1.15); } }
-
-        /* FOOTER CONTROLS */
-        .controls { width: 100%; max-width: 400px; margin-top: 20px; display: flex; align-items: center; justify-content: space-around; background: var(--panel); padding: 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); }
-        #dice-ui { width: 70px; height: 70px; background: white; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #1e293b; font-weight: 900; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 4px solid #cbd5e1; }
-        .rolling { animation: roll-anim 0.1s infinite; }
-        @keyframes roll-anim { 0% { transform: rotate(0deg); } 50% { transform: rotate(10deg); } 100% { transform: rotate(-10deg); } }
+        .header { display: flex; justify-content: space-between; width: 100%; margin-bottom: 20px; background: #2f3640; padding: 15px; border-radius: 10px; }
+        .players-list { display: flex; gap: 10px; flex-wrap: wrap; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: #333; }
+        .badge.p1 { background: var(--p1-color); }
+        .badge.p2 { background: var(--p2-color); }
+        .badge.p3 { background: var(--p3-color); }
         
-        #status-bar { margin-top: 15px; font-weight: bold; font-size: 1.2rem; min-height: 1.5em; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        /* BOARD */
+        .board-container { position: relative; width: 350px; height: 350px; background: var(--board-bg); border-radius: 15px; border: 8px solid #333; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        
+        /* Homes */
+        .home { position: absolute; width: 100px; height: 100px; border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; padding: 15px; }
+        .home.p1 { bottom: 20px; left: 20px; background: rgba(255, 71, 87, 0.2); border: 2px solid var(--p1-color); }
+        .home.p2 { top: 20px; left: 20px; background: rgba(46, 213, 115, 0.2); border: 2px solid var(--p2-color); }
+        .home.p3 { top: 20px; right: 20px; background: rgba(236, 204, 104, 0.2); border: 2px solid var(--p3-color); }
+        
+        .home-spot { width: 100%; height: 100%; border-radius: 50%; background: rgba(0,0,0,0.1); border: 2px dashed rgba(0,0,0,0.2); }
 
-        /* WIN SCREEN */
-        #win-screen { background: rgba(15, 23, 42, 0.95); z-index: 1000; position: fixed; top: 0; left: 0; display: none; }
-        .confetti { position: absolute; width: 10px; height: 10px; background: var(--red); animation: fall 3s infinite; }
-        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+        /* Track */
+        .track { position: absolute; top: 130px; left: 15px; width: 300px; height: 90px; border: 2px solid #ccc; display: flex; flex-wrap: wrap; }
+        /* Simplification for UI: We abstract the track as a circle visually, but programmatically map pieces */
+        #track-svg { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
 
-        @media (max-width: 450px) { :root { --cell-size: 24px; } }
+        /* Pieces */
+        .piece { position: absolute; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.3s ease; z-index: 10; transform: translate(-50%, -50%); }
+        .piece.p1 { background: var(--p1-color); }
+        .piece.p2 { background: var(--p2-color); }
+        .piece.p3 { background: var(--p3-color); }
+        
+        /* Controls */
+        .controls { display: flex; flex-direction: column; align-items: center; margin-top: 20px; width: 100%; gap: 15px; background: #2f3640; padding: 20px; border-radius: 10px; }
+        #diceBtn { font-size: 1.5rem; padding: 15px 30px; border-radius: 50px; }
+        #diceBtn:disabled { background: #747d8c; cursor: not-allowed; }
+        .dice-display { font-size: 3rem; font-weight: bold; color: white; background: #333; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; border-radius: 10px; border: 2px solid #555; }
+        
+        .status-text { font-size: 1.1rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="lobby-screen" class="screen">
-        <div class="card">
-            <h1>LUDO LEGENDS</h1>
-            <p style="color: #94a3b8; margin-bottom: 20px;">v2.0 Real-time Cloud Engine</p>
-            <div id="lobby-error" style="color: var(--red); font-size: 0.9rem; margin-bottom: 10px;"></div>
-            <button id="create-room" class="btn-primary">Create New Arena</button>
-            <div style="margin: 20px 0; color: #475569; font-weight: bold;">OR JOIN ARENA</div>
-            <input type="text" id="room-input" placeholder="ENTER 4-LETTER CODE" maxlength="4">
-            <button id="join-room" class="btn-success">Enter Game</button>
-        </div>
+    <div id="lobby">
+        <h2>🔥 3-Player Ludo 🔥</h2>
+        <div class="error" id="lobbyError"></div>
+        <button id="createRoomBtn">Create New Room</button>
+        <p>OR</p>
+        <input type="text" id="roomInput" placeholder="Enter Room ID" autocomplete="off" maxlength="6">
+        <button id="joinRoomBtn">Join Room</button>
     </div>
 
-    <div id="game-screen" class="screen">
-        <div class="top-nav">
-            <div style="display:flex; flex-direction:column; align-items:flex-start;">
-                <span style="font-size: 0.7rem; color: #94a3b8;">ROOM CODE</span>
-                <span id="room-id-display" style="font-weight: 900; color: var(--yellow); letter-spacing: 2px;">----</span>
+    <div id="game">
+        <div class="header">
+            <div>Room: <strong id="roomDisplay">---</strong></div>
+            <div class="players-list" id="playersList"></div>
+        </div>
+
+        <div class="board-container" id="board">
+            <svg id="track-svg"></svg>
+            
+            <div class="home p1" id="home-p1"></div>
+            <div class="home p2" id="home-p2"></div>
+            <div class="home p3" id="home-p3"></div>
             </div>
-            <div id="my-info" style="font-weight: 800; padding: 5px 15px; border-radius: 10px; background: rgba(255,255,255,0.05);">...</div>
-        </div>
-
-        <div id="ludo-board">
-            <div class="home-base h-red" style="grid-area: 1/1/7/7;"><div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>
-            <div class="home-base h-green" style="grid-area: 1/10/7/16;"><div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>
-            <div class="home-base h-yellow" style="grid-area: 10/10/16/16;"><div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>
-            <div class="home-base h-blue" style="grid-area: 10/1/16/7;"></div>
-            <div class="finish-center"></div>
-        </div>
-
-        <div id="status-bar">Connecting to Firebase...</div>
 
         <div class="controls">
-            <div id="dice-ui">1</div>
-            <button id="roll-btn" class="btn-primary" style="width: auto; padding: 15px 40px;">ROLL</button>
+            <div class="status-text" id="turnDisplay">Waiting for players...</div>
+            <div class="dice-display" id="diceValue">-</div>
+            <button id="diceBtn" disabled>Roll Dice</button>
+            <div class="status-text" id="actionPrompt"></div>
         </div>
     </div>
 
-    <div id="win-screen" class="screen">
-        <h1 style="font-size: 4rem;">VICTORY!</h1>
-        <h2 id="winner-name" style="margin-bottom: 30px;">PLAYER RED WINS</h2>
-        <button onclick="location.reload()" class="btn-primary" style="max-width: 200px;">Play Again</button>
-    </div>
+    <script type="module">
+        // Using standard Firebase v10 CDN compatible with your config
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, onValue, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, runTransaction, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0PAbbgdoW0AncKtvnCHHsr3J0-Meu5HM",
+            authDomain: "ludoooooo-df615.firebaseapp.com",
+            databaseURL: "https://ludoooooo-df615-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ludoooooo-df615",
+            storageBucket: "ludoooooo-df615.firebasestorage.app",
+            messagingSenderId: "502183247328",
+            appId: "1:502183247328:web:d2db4c226fedc34ac2ff85"
+        };
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyD0PAbbgdoW0AncKtvnCHHsr3J0-Meu5HM",
-        authDomain: "ludoooooo-df615.firebaseapp.com",
-        databaseURL: "https://ludoooooo-df615-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "ludoooooo-df615",
-        storageBucket: "ludoooooo-df615.firebasestorage.app",
-        messagingSenderId: "502183247328",
-        appId: "1:502183247328:web:d2db4c226fedc34ac2ff85"
-    };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
+        // State Variables
+        let userUid = null;
+        let currentRoom = null;
+        let myRole = null; // p1, p2, or p3
+        let localState = null;
+        let hasRolledThisTurn = false;
 
-    let uid, roomId, myRole, gameData;
-
-    // --- SOUND ENGINE (Web Audio API) ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSound(freq, type, duration) {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
-    }
-
-    // --- MAP & PATH LOGIC ---
-    const gridMap = [];
-    function setupGrid() {
-        const board = document.getElementById('ludo-board');
-        for (let r = 0; r < 15; r++) {
-            for (let c = 0; c < 15; c++) {
-                if ((r<6 && c<6) || (r<6 && c>8) || (r>8 && c>8) || (r>8 && c<6) || (r>=6 && r<=8 && c>=6 && c<=8)) continue;
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.r = r; cell.dataset.c = c;
-                
-                // Paths & Safe zones
-                if (r === 7 && c >= 1 && c <= 5) cell.classList.add('p-red');
-                if (c === 7 && r >= 1 && r <= 5) cell.classList.add('p-green');
-                if (r === 7 && c >= 9 && c <= 13) cell.classList.add('p-yellow');
-                
-                if (r===6 && c===1) cell.classList.add('start-red');
-                if (r===1 && c===8) cell.classList.add('start-green');
-                if (r===8 && c===13) cell.classList.add('start-yellow');
-
-                const safeSpots = [[6,1],[1,8],[8,13],[13,6],[8,2],[2,6],[6,12],[12,8]];
-                if (safeSpots.some(s => s[0]===r && s[1]===c)) cell.classList.add('safe');
-
-                board.appendChild(cell);
-                gridMap.push({r, c, el: cell});
-            }
+        // Path logic (Simplified Circular Track layout around the center)
+        const pathCoords = [];
+        const centerX = 175, centerY = 175, radius = 110;
+        for (let i = 0; i < 52; i++) {
+            const angle = (i / 52) * Math.PI * 2 - Math.PI / 2;
+            pathCoords[i + 1] = { 
+                x: centerX + radius * Math.cos(angle), 
+                y: centerY + radius * Math.sin(angle) 
+            };
         }
-    }
 
-    // Master path sequence (The outer loop)
-    const loop = [
-        {r:6,c:0},{r:6,c:1},{r:6,c:2},{r:6,c:3},{r:6,c:4},{r:6,c:5},{r:5,c:6},{r:4,c:6},{r:3,c:6},{r:2,c:6},{r:1,c:6},{r:0,c:6},{r:0,c:7},
-        {r:0,c:8},{r:1,c:8},{r:2,c:8},{r:3,c:8},{r:4,c:8},{r:5,c:8},{r:6,c:9},{r:6,c:10},{r:6,c:11},{r:6,c:12},{r:6,c:13},{r:6,c:14},{r:7,c:14},
-        {r:8,c:14},{r:8,c:13},{r:8,c:12},{r:8,c:11},{r:8,c:10},{r:8,c:9},{r:9,c:8},{r:10,c:8},{r:11,c:8},{r:12,c:8},{r:13,c:8},{r:14,c:8},{r:14,c:7},
-        {r:14,c:6},{r:13,c:6},{r:12,c:6},{r:11,c:6},{r:10,c:6},{r:9,c:6},{r:8,c:5},{r:8,c:4},{r:8,c:3},{r:8,c:2},{r:8,c:1},{r:8,c:0},{r:7,c:0}
-    ];
-
-    // Build specific paths for each color including their home stretch
-    const getPath = (role) => {
-        let startIdx = role==='p1' ? 1 : role==='p2' ? 14 : 27;
-        let path = [];
-        for(let i=0; i<51; i++) path.push(loop[(startIdx + i) % 52]);
-        // Add home stretch
-        if(role==='p1') for(let i=1; i<=5; i++) path.push({r:7, c:i});
-        if(role==='p2') for(let i=1; i<=5; i++) path.push({r:i, c:7});
-        if(role==='p3') for(let i=13; i>=9; i--) path.push({r:7, c:i});
-        path.push({r:7,c:7}); // Finish
-        return path;
-    };
-
-    const paths = { p1: getPath('p1'), p2: getPath('p2'), p3: getPath('p3') };
-
-    // --- GAME ENGINE ---
-    async function init() {
-        const user = await signInAnonymously(auth);
-        uid = user.user.uid;
-        setupGrid();
-        
-        // Auto-reconnect
-        const savedRoom = localStorage.getItem('ludo_room');
-        if(savedRoom) joinRoom(savedRoom);
-
-        document.getElementById('create-room').onclick = createRoom;
-        document.getElementById('join-room').onclick = () => joinRoom(document.getElementById('room-input').value.toUpperCase());
-        document.getElementById('roll-btn').onclick = rollDice;
-    }
-
-    async function createRoom() {
-        const id = Math.random().toString(36).substring(2, 6).toUpperCase();
-        myRole = 'p1'; roomId = id;
-        localStorage.setItem('ludo_room', id);
-        await set(ref(db, `rooms/${id}`), {
-            players: { [uid]: 'p1' },
-            state: { turn: 'p1', dice: 0, roller: '', status: 'waiting', pieces: { p1:[-1,-1,-1,-1], p2:[-1,-1,-1,-1], p3:[-1,-1,-1,-1] }, v: 0 }
-        });
-        launchGame(id);
-    }
-
-    async function joinRoom(id) {
-        if(!id) return;
-        const snap = await get(ref(db, `rooms/${id}`));
-        if(!snap.exists()) {
-            localStorage.removeItem('ludo_room');
-            return alert("Arena not found!");
+        // Draw track visually
+        const svg = document.getElementById('track-svg');
+        for(let i = 1; i <= 52; i++) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', pathCoords[i].x);
+            circle.setAttribute('cy', pathCoords[i].y);
+            circle.setAttribute('r', '8');
+            circle.setAttribute('fill', i === 1 ? 'var(--p1-color)' : (i === 18 ? 'var(--p2-color)' : (i === 35 ? 'var(--p3-color)' : 'white')));
+            circle.setAttribute('stroke', '#ccc');
+            svg.appendChild(circle);
         }
-        const data = snap.val();
-        if(data.players[uid]) {
-            myRole = data.players[uid];
-        } else {
-            const count = Object.keys(data.players).length;
-            if(count >= 3) return alert("Arena full!");
-            myRole = count === 1 ? 'p2' : 'p3';
-            await update(ref(db, `rooms/${id}/players`), { [uid]: myRole });
-            if(count === 2) await update(ref(db, `rooms/${id}/state`), { status: 'playing' });
-        }
-        roomId = id;
-        localStorage.setItem('ludo_room', id);
-        launchGame(id);
-    }
 
-    function launchGame(id) {
-        document.getElementById('lobby-screen').style.display = 'none';
-        document.getElementById('game-screen').style.display = 'flex';
-        document.getElementById('room-id-display').innerText = id;
-        document.getElementById('my-info').innerText = "YOU: " + myRole.toUpperCase();
-        document.getElementById('my-info').style.color = myRole==='p1'? 'var(--red)' : myRole==='p2'? 'var(--green)' : 'var(--yellow)';
-
-        onValue(ref(db, `rooms/${id}/state`), (snap) => {
-            gameData = snap.val();
-            if(!gameData) return;
-            syncUI();
-        });
-    }
-
-    function syncUI() {
-        const isMyTurn = gameData.turn === myRole && gameData.status === 'playing';
-        const hasRolled = gameData.roller === myRole;
-        
-        document.getElementById('roll-btn').disabled = !isMyTurn || hasRolled;
-        document.getElementById('dice-ui').innerText = gameData.dice || '?';
-        
-        const status = document.getElementById('status-bar');
-        if(gameData.status === 'waiting') status.innerText = "WAITING FOR PLAYERS...";
-        else if(isMyTurn) status.innerText = hasRolled ? "MOVE A PIECE!" : "YOUR TURN! ROLL!";
-        else status.innerText = `${gameData.turn.toUpperCase()} IS PLAYING...`;
-
-        // Draw pieces
-        document.querySelectorAll('.piece').forEach(p => p.remove());
-        ['p1', 'p2', 'p3'].forEach(pKey => {
-            gameData.pieces[pKey].forEach((pos, idx) => {
-                if(pos === 99) return; // Finished
-                const p = document.createElement('div');
-                const colorClass = pKey === 'p1' ? 'red' : pKey === 'p2' ? 'green' : 'yellow';
-                p.className = `piece p-${colorClass}-fill`;
-                
-                // Add highlight if it's my turn and I can move this piece
-                if(isMyTurn && pKey === myRole && hasRolled) {
-                    if(pos === -1 && gameData.dice === 6) p.classList.add('turn-highlight');
-                    if(pos >= 0) p.classList.add('turn-highlight');
-                }
-
-                let parent;
-                if(pos === -1) {
-                    parent = document.querySelector(`.h-${colorClass}`).children[idx];
-                } else {
-                    const coord = paths[pKey][pos];
-                    parent = document.querySelector(`[data-r="${coord.r}"][data-c="${coord.c}"]`);
-                }
-                parent.appendChild(p);
-                p.onclick = () => handleMove(idx);
-            });
-        });
-
-        // Check Winner
-        ['p1', 'p2', 'p3'].forEach(p => {
-            if(gameData.pieces[p].every(pos => pos === 56)) {
-                showWin(p);
+        // Init App
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userUid = user.uid;
+                document.getElementById('createRoomBtn').disabled = false;
+                document.getElementById('joinRoomBtn').disabled = false;
+            } else {
+                signInAnonymously(auth).catch(e => showError(e.message));
             }
         });
-    }
 
-    async function rollDice() {
-        playSound(440, 'square', 0.1);
-        document.getElementById('dice-ui').classList.add('rolling');
-        setTimeout(async () => {
-            document.getElementById('dice-ui').classList.remove('rolling');
-            const val = Math.floor(Math.random() * 6) + 1;
-            await runTransaction(ref(db, `rooms/${roomId}/state`), (s) => {
-                if(s && s.turn === myRole && s.roller === '') {
-                    s.dice = val; s.roller = myRole; s.v++;
-                }
-                return s;
-            });
-        }, 500);
-    }
+        // DOM Elements
+        const lobbyEl = document.getElementById('lobby');
+        const gameEl = document.getElementById('game');
+        const errorEl = document.getElementById('lobbyError');
+        const roomInput = document.getElementById('roomInput');
+        const diceBtn = document.getElementById('diceBtn');
 
-    async function handleMove(idx) {
-        if(gameData.turn !== myRole || gameData.roller !== myRole) return;
-        const dice = gameData.dice;
-        const currentPos = gameData.pieces[myRole][idx];
-        let next = currentPos;
+        // Event Listeners
+        document.getElementById('createRoomBtn').onclick = createRoom;
+        document.getElementById('joinRoomBtn').onclick = () => joinRoom(roomInput.value.toUpperCase());
+        diceBtn.onclick = rollDice;
 
-        if(currentPos === -1) {
-            if(dice === 6) next = 0;
-            else return;
-        } else {
-            next = currentPos + dice;
-            if(next > 56) return; // Overfinish
+        function showError(msg) {
+            errorEl.innerText = msg;
+            setTimeout(() => errorEl.innerText = '', 3000);
         }
 
-        playSound(660, 'sine', 0.1);
+        function generateRoomId() {
+            return Math.random().toString(36).substring(2, 7).toUpperCase();
+        }
 
-        await runTransaction(ref(db, `rooms/${roomId}/state`), (s) => {
-            if(s && s.turn === myRole && s.v === gameData.v) {
-                s.pieces[myRole][idx] = next;
+        async function createRoom() {
+            const roomId = generateRoomId();
+            const roomRef = ref(db, `rooms/${roomId}`);
+            
+            const initialData = {
+                players: { [userUid]: "p1" },
+                gameState: {
+                    status: "waiting",
+                    turn: "p1",
+                    dice: { value: 0, lastRolledBy: "" },
+                    pieces: {
+                        p1: [0, 0, 0, 0],
+                        p2: [0, 0, 0, 0],
+                        p3: [0, 0, 0, 0]
+                    },
+                    version: 1
+                }
+            };
+
+            await set(roomRef, initialData);
+            myRole = "p1";
+            enterGame(roomId);
+        }
+
+        async function joinRoom(roomId) {
+            if (!roomId) return showError("Enter a Room ID");
+            const roomRef = ref(db, `rooms/${roomId}`);
+            const snapshot = await get(roomRef);
+
+            if (!snapshot.exists()) return showError("Room not found!");
+            
+            const data = snapshot.val();
+            const players = data.players || {};
+            
+            if (players[userUid]) {
+                myRole = players[userUid]; // Reconnecting
+            } else {
+                const playerCount = Object.keys(players).length;
+                if (playerCount >= 3) return showError("Room is full!");
                 
-                let extraTurn = (dice === 6);
+                myRole = !Object.values(players).includes("p2") ? "p2" : "p3";
+                await update(ref(db, `rooms/${roomId}/players`), { [userUid]: myRole });
                 
-                // Capture Logic
-                if(next < 51) { // Only capture on main loop
-                    const myCoord = paths[myRole][next];
-                    const isSafe = document.querySelector(`[data-r="${myCoord.r}"][data-c="${myCoord.c}"]`).classList.contains('safe');
-                    
-                    if(!isSafe) {
-                        ['p1','p2','p3'].forEach(other => {
-                            if(other !== myRole) {
-                                s.pieces[other].forEach((oPos, oIdx) => {
-                                    if(oPos >= 0 && oPos < 51) {
-                                        const oCoord = paths[other][oPos];
-                                        if(oCoord.r === myCoord.r && oCoord.c === myCoord.c) {
-                                            s.pieces[other][oIdx] = -1;
-                                            extraTurn = true; // Capturing gives extra turn
-                                            playSound(150, 'sawtooth', 0.3);
-                                        }
-                                    }
-                                });
-                            }
-                        });
+                if (playerCount === 2) { // Making it 3 players total now
+                    await update(ref(db, `rooms/${roomId}/gameState`), { status: "playing" });
+                }
+            }
+            enterGame(roomId);
+        }
+
+        function enterGame(roomId) {
+            currentRoom = roomId;
+            lobbyEl.style.display = 'none';
+            gameEl.style.display = 'flex';
+            document.getElementById('roomDisplay').innerText = roomId;
+            
+            // Listen to Firebase DB
+            onValue(ref(db, `rooms/${roomId}/gameState`), (snapshot) => {
+                const state = snapshot.val();
+                if (state) updateLocalGame(state);
+            });
+            
+            onValue(ref(db, `rooms/${roomId}/players`), (snapshot) => {
+                const players = snapshot.val();
+                if (players) updatePlayerList(players);
+            });
+        }
+
+        function updatePlayerList(players) {
+            const list = document.getElementById('playersList');
+            list.innerHTML = '';
+            for (let uid in players) {
+                const role = players[uid];
+                const span = document.createElement('span');
+                span.className = `badge ${role}`;
+                span.innerText = `${role.toUpperCase()} ${uid === userUid ? '(You)' : ''}`;
+                list.appendChild(span);
+            }
+        }
+
+        function updateLocalGame(state) {
+            localState = state;
+            
+            // UI Updates
+            document.getElementById('diceValue').innerText = state.dice.value > 0 ? state.dice.value : '-';
+            
+            const isMyTurn = (state.turn === myRole);
+            const isPlaying = (state.status === "playing");
+            
+            if (!isPlaying) {
+                document.getElementById('turnDisplay').innerText = "Waiting for 3 players...";
+                diceBtn.disabled = true;
+            } else {
+                document.getElementById('turnDisplay').innerText = isMyTurn ? "Your Turn!" : `${state.turn.toUpperCase()}'s Turn`;
+                
+                // Strict Turn Control UI
+                if (isMyTurn) {
+                    if (state.dice.lastRolledBy === myRole) {
+                        diceBtn.disabled = true;
+                        hasRolledThisTurn = true;
+                        document.getElementById('actionPrompt').innerText = "Move a piece!";
+                    } else {
+                        diceBtn.disabled = false;
+                        hasRolledThisTurn = false;
+                        document.getElementById('actionPrompt').innerText = "Roll the dice!";
                     }
+                } else {
+                    diceBtn.disabled = true;
+                    document.getElementById('actionPrompt').innerText = "";
                 }
-
-                if(next === 56) extraTurn = true; // Reaching home gives extra turn
-
-                if(!extraTurn) {
-                    const roles = ['p1', 'p2', 'p3'];
-                    s.turn = roles[(roles.indexOf(myRole) + 1) % 3];
-                }
-                
-                s.dice = 0; s.roller = ''; s.v++;
             }
-            return s;
-        });
-    }
 
-    function showWin(role) {
-        document.getElementById('win-screen').style.display = 'flex';
-        document.getElementById('winner-name').innerText = `PLAYER ${role.toUpperCase()} CONQUERED THE ARENA`;
-        for(let i=0; i<50; i++) {
-            const c = document.createElement('div');
-            c.className = 'confetti';
-            c.style.left = Math.random()*100 + 'vw';
-            c.style.backgroundColor = ['red','green','yellow','blue'][Math.floor(Math.random()*4)];
-            c.style.animationDelay = Math.random()*2 + 's';
-            document.getElementById('win-screen').appendChild(c);
+            renderPieces(state.pieces);
         }
-    }
 
-    init();
-</script>
+        async function rollDice() {
+            if (!localState || localState.turn !== myRole || hasRolledThisTurn) return;
+            
+            const roll = Math.floor(Math.random() * 6) + 1;
+            
+            // Use Firebase Transaction to prevent race conditions
+            const stateRef = ref(db, `rooms/${currentRoom}/gameState`);
+            await runTransaction(stateRef, (state) => {
+                if (state && state.turn === myRole && state.dice.lastRolledBy !== myRole) {
+                    state.dice.value = roll;
+                    state.dice.lastRolledBy = myRole;
+                    state.version++;
+                }
+                return state;
+            });
+        }
+
+        function renderPieces(piecesObj) {
+            // Remove old pieces
+            document.querySelectorAll('.piece').forEach(p => p.remove());
+            
+            // Config Start/Home offsets
+            const offsets = { p1: 1, p2: 18, p3: 35 };
+
+            for (const player in piecesObj) {
+                piecesObj[player].forEach((pos, index) => {
+                    const el = document.createElement('div');
+                    el.className = `piece ${player}`;
+                    
+                    if (pos === 0) {
+                        // In Base
+                        const homeSpots = document.querySelectorAll(`.home.${player} .home-spot`);
+                        if(homeSpots.length === 0) {
+                            // generate home spots if missing
+                            const homeBox = document.getElementById(`home-${player}`);
+                            for(let i=0; i<4; i++) {
+                                let spot = document.createElement('div');
+                                spot.className = 'home-spot';
+                                homeBox.appendChild(spot);
+                            }
+                        }
+                        const homeSpotsUpdated = document.querySelectorAll(`.home.${player} .home-spot`);
+                        const rect = homeSpotsUpdated[index].getBoundingClientRect();
+                        const boardRect = document.getElementById('board').getBoundingClientRect();
+                        el.style.left = `${rect.left - boardRect.left + rect.width/2}px`;
+                        el.style.top = `${rect.top - boardRect.top + rect.height/2}px`;
+                    } else {
+                        // On Track - calculate absolute position relative to start
+                        let absolutePos = (pos + offsets[player] - 1);
+                        if (absolutePos > 52) absolutePos -= 52;
+                        
+                        const coords = pathCoords[absolutePos];
+                        el.style.left = `${coords.x}px`;
+                        el.style.top = `${coords.y}px`;
+                    }
+
+                    // Click to move
+                    if (player === myRole) {
+                        el.onclick = () => attemptMove(index, pos);
+                    }
+                    
+                    document.getElementById('board').appendChild(el);
+                });
+            }
+        }
+
+        async function attemptMove(pieceIndex, currentPos) {
+            if (!localState || localState.turn !== myRole || localState.dice.lastRolledBy !== myRole) return;
+            
+            const diceVal = localState.dice.value;
+            let newPos = currentPos;
+
+            if (currentPos === 0) {
+                if (diceVal === 6) newPos = 1; // Need 6 to exit home
+                else return; // Ignore click if not 6 and in home
+            } else {
+                newPos = currentPos + diceVal;
+                if (newPos > 52) return; // Simplified: block overshooting finish
+            }
+
+            // Anti-cheat via Transaction
+            const stateRef = ref(db, `rooms/${currentRoom}/gameState`);
+            await runTransaction(stateRef, (state) => {
+                // Version and turn check
+                if (state && state.turn === myRole && state.dice.lastRolledBy === myRole && state.version === localState.version) {
+                    
+                    state.pieces[myRole][pieceIndex] = newPos;
+                    
+                    // Basic capture logic (send others home if same spot)
+                    // Convert relative pos to absolute to check collisions
+                    const offsets = { p1: 1, p2: 18, p3: 35 };
+                    let myAbsolute = (newPos + offsets[myRole] - 1);
+                    if(myAbsolute > 52) myAbsolute -= 52;
+
+                    for(let other in state.pieces) {
+                        if(other !== myRole) {
+                            for(let i=0; i<4; i++) {
+                                let otherPos = state.pieces[other][i];
+                                if(otherPos > 0) {
+                                    let otherAbsolute = (otherPos + offsets[other] - 1);
+                                    if(otherAbsolute > 52) otherAbsolute -= 52;
+                                    
+                                    if(myAbsolute === otherAbsolute) {
+                                        // Captured! Send home
+                                        state.pieces[other][i] = 0;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Next Turn Calculation
+                    state.turn = (myRole === "p1") ? "p2" : ((myRole === "p2") ? "p3" : "p1");
+                    state.dice.lastRolledBy = ""; // Reset roll tracker
+                    state.version++;
+                }
+                return state;
+            });
+        }
+    </script>
 </body>
 </html>
